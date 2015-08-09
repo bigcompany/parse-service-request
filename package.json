@@ -1,0 +1,20 @@
+{
+  "name": "parse-service-request",
+  "version": "1.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap test/"
+  },
+  "author": "Marak Squires <marak.squires@gmail.com",
+  "license": "MIT",
+  "description": "parses incoming service requests for any data like query string, form fields, json, or multi-part.",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/bigcompany/parse-service-request.git"
+  },
+  "dependencies": {
+    "body-parser": "^1.9.2",
+    "busboy": "^0.2.9",
+    "merge-params": "^1.0.0"
+  }
+}
