@@ -1,6 +1,6 @@
 {
   "name": "parse-service-request",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "scripts": {
     "test": "tap test/"
@@ -15,6 +15,6 @@
   "dependencies": {
     "body-parser": "^1.9.2",
     "busboy": "^0.2.9",
-    "merge-params": "^1.0.0"
+    "merge-params": "1.x.x"
   }
 }
