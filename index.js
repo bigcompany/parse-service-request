@@ -36,16 +36,16 @@ module['exports'] = function parseRequestBody (req, res, next) {
       // one for parsing multipart form files, another for parsing urlencoded form fields
       var busboyFiles = new Busboy({ headers: req.headers });
       var busboyFields = new Busboy({ headers: req.headers });
-//      console.log('parsing')
+      // console.log('parsing')
       // a multipart file upload was detected, add this upload pipe to the resource params
       busboyFiles.on('file', function(fieldname, file, filename, encoding, mimetype) {
-//        console.log('found file', fieldname);
+        // console.log('found file', fieldname);
         fields[fieldname] = file;
       });
 
       // a urlencoded form field was detected, add it's value to resource params
       busboyFields.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
-//        console.log('found field', fieldname, val);
+        // console.log('found field', fieldname, val);
         fields[fieldname] = val;
       });
 
@@ -67,11 +67,10 @@ module['exports'] = function parseRequestBody (req, res, next) {
       req.pipe(busboyFields);
 
       //return next(req, res);
-    
 
     } else if (contentTypes.indexOf("application/json") !== -1 ) {
       jsonParser(req, res, function(){
-        next(req, res, {});
+        next(req, res, req.body);
       });
     } else {
       // Incoming request was a POST, but did not contain content types of multipart or urlencoded form
