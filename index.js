@@ -1,18 +1,25 @@
 var mergeParams = require('merge-params');
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
-//console.log('sanity');
+
 module['exports'] = function parseRequestBody (req, res, next) {
   var fields = {};
-//  console.log('parse service request', req.url);
-//  console.log(req)
+
+  var acceptTypes = [];
+
+  // auto-assigns req.jsonResponse boolean for use later ( it's useful to know )
+  if (req.headers && req.headers.accept) {
+    acceptTypes = req.headers.accept.split(',');
+  }
+  if (acceptTypes.indexOf('text/html') === -1) {
+    req.jsonResponse = true;
+  }
+
   if (req.method === "GET") {
-  //  console.log('get method');
     return mergeParams(req, res, function(){
       return next(req, res);
     });
-  } else if (req.method === "POST") {
-//    console.log('post');
+  } else if (req.method === "POST" || req.method === "PUT") {
     // only attempt to parse body if its multipart form or urlencoded form, if not
     // do not parse as we don't want to interrupt req
     var contentTypes = [];
@@ -75,7 +82,7 @@ module['exports'] = function parseRequestBody (req, res, next) {
     } else {
       // Incoming request was a POST, but did not contain content types of multipart or urlencoded form
       // This means we should treat the incoming request is a streaming request
-      next(req, res, {});
+      next(req, res, req.body);
     }
   }
 }
