@@ -4,7 +4,6 @@ var jsonParser = bodyParser.json();
 
 module['exports'] = function parseRequestBody (req, res, next) {
   var fields = {};
-
   var acceptTypes = [];
 
   // auto-assigns req.jsonResponse boolean for use later ( it's useful to know )
@@ -60,7 +59,7 @@ module['exports'] = function parseRequestBody (req, res, next) {
       busboyFields.on('finish', function() {
         mergeParams(req, res, function(){
           next(req, res, fields);
-        })
+        });
       });
 
       // when all multipart files have been uploaded, do nothing
@@ -76,8 +75,10 @@ module['exports'] = function parseRequestBody (req, res, next) {
       //return next(req, res);
 
     } else if (contentTypes.indexOf("application/json") !== -1 ) {
-      jsonParser(req, res, function(){
-        next(req, res, req.body);
+      jsonParser(req, res, function jsonParserCallback () {
+        mergeParams(req, res, function mergeParamsCallback () {
+          next(req, res, req.body);
+        });
       });
     } else {
       // Incoming request was a POST, but did not contain content types of multipart or urlencoded form
