@@ -5,7 +5,6 @@ var jsonParser = bodyParser.json();
 module['exports'] = function parseRequestBody (req, res, next) {
   var fields = {};
   var acceptTypes = [];
-
   // auto-assigns req.jsonResponse boolean for use later ( it's useful to know )
   if (req.headers && req.headers.accept) {
     acceptTypes = req.headers.accept.split(',');
@@ -58,7 +57,10 @@ module['exports'] = function parseRequestBody (req, res, next) {
       // when all fields have been parsed, merge the resource params and continue
       busboyFields.on('finish', function() {
         mergeParams(req, res, function(){
-          next(req, res, fields);
+          for (var p in fields) {
+            req.resource.params[p] = fields[p];
+          }
+          next(req, res, req.resource.params);
         });
       });
 
@@ -75,7 +77,13 @@ module['exports'] = function parseRequestBody (req, res, next) {
       //return next(req, res);
 
     } else if (contentTypes.indexOf("application/json") !== -1 ) {
-      jsonParser(req, res, function jsonParserCallback () {
+      jsonParser(req, res, function jsonParserCallback (err, fields) {
+        /*
+          // Removed. We may have to add this back? mergeparams should handle it
+          for (var p in fields) {
+            req.resource.params[p] = fields[p];
+          }
+        */
         mergeParams(req, res, function mergeParamsCallback () {
           next(req, res, req.body);
         });
