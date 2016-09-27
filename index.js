@@ -13,17 +13,15 @@ module['exports'] = function parseRequestBody (req, res, next) {
     req.jsonResponse = true;
   }
 
-  if (req.method === "GET") {
-    return mergeParams(req, res, function(){
-      return next(req, res);
-    });
-  } else if (req.method === "POST" || req.method === "PUT") {
+  if (req.method === "POST" || req.method === "PUT") {
+
     // only attempt to parse body if its multipart form or urlencoded form, if not
     // do not parse as we don't want to interrupt req
     var contentTypes = [];
     if (req.headers && req.headers['content-type']) {
       contentTypes = req.headers['content-type'].split(';');
     }
+
     //
     // If a content-type of multipart/form-data or application/x-www-form-urlencoded is detected,
     // use busboy to parse the incoming form.
@@ -74,16 +72,23 @@ module['exports'] = function parseRequestBody (req, res, next) {
       req.pipe(busboyFiles);
       req.pipe(busboyFields);
 
+      // removed? piping should end the response?
+      // do we have any uncaught stream errors here?
       //return next(req, res);
 
-    } else if (contentTypes.indexOf("application/json") !== -1 ) {
+    } else if (req.jsonResponse) {
+
       jsonParser(req, res, function jsonParserCallback (err, fields) {
-        /*
-          // Removed. We may have to add this back? mergeparams should handle it
-          for (var p in fields) {
-            req.resource.params[p] = fields[p];
-          }
-        */
+
+        if (typeof fields !== "undefined") {
+          req.body = fields;
+        }
+        // could have error here due to invalid json
+        // current behavior is to ignore bad json and continue request
+        if (err) {
+          console.log('Error in parsing JSON:', err);
+          // return next(err);
+        }
         mergeParams(req, res, function mergeParamsCallback () {
           next(req, res, req.body);
         });
@@ -93,5 +98,9 @@ module['exports'] = function parseRequestBody (req, res, next) {
       // This means we should treat the incoming request is a streaming request
       next(req, res, req.body);
     }
+  } else {
+    mergeParams(req, res, function mergeParamsCallback () {
+      next(req, res, req.body);
+    });
   }
 }
