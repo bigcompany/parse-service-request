@@ -1,17 +1,23 @@
 var mergeParams = require('merge-params');
 var bodyParser = require('body-parser');
-var jsonParser = bodyParser.json();
+var jsonParser = bodyParser.json({
+  limit: '10000kb'
+});
 
 module['exports'] = function parseRequestBody (req, res, next) {
+
   var fields = {};
   var acceptTypes = [];
+
   // auto-assigns req.jsonResponse boolean for use later ( it's useful to know )
   if (req.headers && req.headers.accept) {
     acceptTypes = req.headers.accept.split(',');
   }
+
   if (acceptTypes.indexOf('text/html') === -1) {
     req.jsonResponse = true;
   }
+
 
   if (req.method === "POST" || req.method === "PUT") {
 
@@ -38,7 +44,9 @@ module['exports'] = function parseRequestBody (req, res, next) {
       // create two busboy instances
       // one for parsing multipart form files, another for parsing urlencoded form fields
       var busboyFiles = new Busboy({ headers: req.headers });
-      var busboyFields = new Busboy({ headers: req.headers });
+      var busboyFields = new Busboy({ 
+        headers: req.headers
+      });
       // console.log('parsing')
       // a multipart file upload was detected, add this upload pipe to the resource params
       busboyFiles.on('file', function(fieldname, file, filename, encoding, mimetype) {
@@ -77,20 +85,22 @@ module['exports'] = function parseRequestBody (req, res, next) {
       //return next(req, res);
 
     } else if (req.jsonResponse) {
-
       jsonParser(req, res, function jsonParserCallback (err, fields) {
-
-        if (typeof fields !== "undefined") {
-          req.body = fields;
-        }
         // could have error here due to invalid json
         // current behavior is to ignore bad json and continue request
         if (err) {
-          console.log('Error in parsing JSON:', err);
-          // return next(err);
+          // console.log('Error in parsing JSON:', err);
+          // for most json validation errors, we want to pass the error back to the user
+          // for `request.size.invalid` errors, we should ignore the error and continue
+          // this is due to a strange bug with the request body not being preserved and body-parser module failing
+          // root cause is unknown, but it should be able to be fixed by somehow preserving the body
+          // see: https://github.com/stream-utils/raw-body/issues/55
+          if (err.type !== 'request.size.invalid') {
+            return res.json(err)
+          }
         }
         mergeParams(req, res, function mergeParamsCallback () {
-          next(req, res, req.body);
+          next(req, res);
         });
       });
     } else {
